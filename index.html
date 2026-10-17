@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feliz Cumpleaños Mamita ❤️</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #0f051d;
+            color: #fff;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        #webgl-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .start-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 80vh;
+            text-align: center;
+        }
+        .main-title {
+            font-family: 'Dancing Script', cursive;
+            font-size: 3rem;
+            color: #ff85a2;
+            text-shadow: 0 0 15px rgba(255, 133, 162, 0.6);
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 1.1rem;
+            color: #e2c0ff;
+            margin-bottom: 30px;
+        }
+        .btn-start {
+            background: linear-gradient(45deg, #ff4b72, #ff85a2);
+            color: white;
+            border: none;
+            padding: 16px 36px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 50px;
+            box-shadow: 0 10px 25px rgba(255, 75, 114, 0.5);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 75, 114, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(255, 75, 114, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 75, 114, 0); }
+        }
+        .intro-sequence {
+            display: none;
+            width: 100%;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .frame-container {
+            position: relative;
+            width: 280px;
+            height: 360px;
+            margin: 0 auto 20px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6), 0 0 20px rgba(255, 133, 162, 0.4);
+            border: 3px solid rgba(255,255,255,0.2);
+        }
+        .frame-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+        .frame-img.active {
+            opacity: 1;
+        }
+        .intro-caption {
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.8rem;
+            color: #ffd1dc;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 10px;
+            transition: opacity 0.8s ease;
+        }
+        .gallery-section {
+            display: none;
+            width: 100%;
+            text-align: center;
+            padding-bottom: 40px;
+        }
+        .gallery-title {
+            font-family: 'Dancing Script', cursive;
+            font-size: 2.5rem;
+            color: #ff85a2;
+            margin-bottom: 5px;
+        }
+        .swipe-hint {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: #e2c0ff;
+            font-size: 0.9rem;
+            margin-bottom: 25px;
+        }
+        .hand-icon {
+            font-size: 1.5rem;
+            animation: swipeAnim 1.8s infinite ease-in-out;
+        }
+        @keyframes swipeAnim {
+            0% { transform: translateX(-15px) rotate(-10deg); }
+            50% { transform: translateX(15px) rotate(10deg); }
+            100% { transform: translateX(-15px) rotate(-10deg); }
+        }
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 380px;
+            perspective: 1000px;
+            touch-action: pan-y;
+        }
+        .card-stack {
+            position: relative;
+            width: 260px;
+            height: 350px;
+            margin: 0 auto;
+            transform-style: preserve-3d;
+        }
+        .card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 4px solid #fff;
+            transition: transform 0.4s ease, opacity 0.4s ease;
+            background: #222;
+        }
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .letter-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 20px;
+            padding: 25px 20px;
+            margin-top: 30px;
+            width: 100%;
+            text-align: left;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+        }
+        .letter-title {
+            font-family: 'Dancing Script', cursive;
+            font-size: 2rem;
+            color: #ff85a2;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .letter-text {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: #f3e5f5;
+        }
+        .letter-signature {
+            margin-top: 20px;
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.5rem;
+            color: #ff85a2;
+            text-align: right;
+        }
+        .music-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+            background: rgba(255, 133, 162, 0.8);
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: white;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        #yt-player {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="webgl-bg"></div>
+    <div id="yt-player"></div>
+
+    <button class="music-btn" id="musicToggle">🎵</button>
+
+    <div class="container">
+        
+        <div class="start-screen" id="startScreen">
+            <h1 class="main-title">Para la mejor Mamá del mundo ❤️</h1>
+            <p class="subtitle">Un regalo especial hecho con todo mi amor</p>
+            <button class="btn-start" onclick="startExperience()">Iniciar regalo 🎁</button>
+        </div>
+
+        <div class="intro-sequence" id="introSeq">
+            <div class="frame-container">
+                <img src="./assets/52735.jpg" class="frame-img active" id="f0">
+                <img src="./assets/52730.jpg" class="frame-img" id="f1">
+                <img src="./assets/52736.jpg" class="frame-img" id="f2">
+                <img src="./assets/52733.jpg" class="frame-img" id="f3">
+                <img src="./assets/52740.jpg" class="frame-img" id="f4">
+                <img src="./assets/52737.jpg" class="frame-img" id="f5">
+                <img src="./assets/52743.jpg" class="frame-img" id="f6">
+                <img src="./assets/52747.jpg" class="frame-img" id="f7">
+                <img src="./assets/52749.jpg" class="frame-img" id="f8">
+            </div>
+            <div class="intro-caption" id="captionText">Gracias por darme tanto, mamita hermosa...</div>
+        </div>
+
+        <div class="gallery-section" id="gallerySeq">
+            <h2 class="gallery-title">¡Feliz Cumpleaños Mamita! 🎉</h2>
+            <div class="swipe-hint">
+                <span class="hand-icon">👆</span>
+                <span>Desliza para ver nuestras fotos</span>
+            </div>
+
+            <div class="carousel-container" id="carousel">
+                <div class="card-stack" id="cardStack">
+                    <div class="card"><img src="./assets/52735.jpg" alt="Foto 1"></div>
+                    <div class="card"><img src="./assets/52730.jpg" alt="Foto 2"></div>
+                    <div class="card"><img src="./assets/52736.jpg" alt="Foto 3"></div>
+                    <div class="card"><img src="./assets/52733.jpg" alt="Foto 4"></div>
+                    <div class="card"><img src="./assets/52740.jpg" alt="Foto 5"></div>
+                    <div class="card"><img src="./assets/52737.jpg" alt="Foto 6"></div>
+                    <div class="card"><img src="./assets/52743.jpg" alt="Foto 7"></div>
+                    <div class="card"><img src="./assets/52747.jpg" alt="Foto 8"></div>
+                    <div class="card"><img src="./assets/52749.jpg" alt="Foto 9"></div>
+                </div>
+            </div>
+
+            <div class="letter-card">
+                <h3 class="letter-title">Para ti, Mamá</h3>
+                <p class="letter-text">
+                    Como mujer y como tu hija, hoy quiero agradecerte de corazón por ser mi fuerza, mi guía y mi refugio incondicional. Ver todo lo que has luchado y cómo has entregado tu amor en cada paso me llena de orgullo y admiración.
+                    <br><br>
+                    Gracias por tu ternura, por tus abrazos cálidos cuando más los he necesitado y por enseñarme el verdadero significado de la fortaleza. Deseo de todo corazón que la vida te devuelva multiplicado todo el amor y la alegría que nos das cada día.
+                </p>
+                <div class="letter-signature">Te quiero muchísimo, mamita ❤️<br><i>Tu hija</i></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- YouTube API -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+
+    <script>
+        // Three.js Background
+        let scene, camera, renderer, hearts = [];
+        function init3D() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 30;
+
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('webgl-bg').appendChild(renderer.domElement);
+
+            // Shape Heart
+            const heartShape = new THREE.Shape();
+            heartShape.moveTo(25, 25);
+            heartShape.bezierCurveTo(25, 25, 20, 0, 0, 0);
+            heartShape.bezierCurveTo(-30, 0, -30, 35, -30, 35);
+            heartShape.bezierCurveTo(-30, 55, -10, 77, 25, 95);
+            heartShape.bezierCurveTo(60, 77, 80, 55, 80, 35);
+            heartShape.bezierCurveTo(80, 35, 80, 0, 50, 0);
+            heartShape.bezierCurveTo(35, 0, 25, 25, 25, 25);
+
+            const extrudeSettings = { depth: 4, bevelEnabled: true, bevelSegments: 2, steps: 1, bevelSize: 2, bevelThickness: 2 };
+            const geometry = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
+            geometry.center();
+
+            for (let i = 0; i < 25; i++) {
+                const material = new THREE.MeshPhongMaterial({
+                    color: Math.random() > 0.5 ? 0xff4b72 : 0xff85a2,
+                    shininess: 100
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.scale.set(0.04, 0.04, 0.04);
+                mesh.position.set((Math.random() - 0.5) * 60, (Math.random() - 0.5) * 60, (Math.random() - 0.5) * 40);
+                mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+                mesh.userData = {
+                    rotSpeedX: (Math.random() - 0.5) * 0.02,
+                    rotSpeedY: (Math.random() - 0.5) * 0.02,
+                    floatSpeed: 0.02 + Math.random() * 0.03
+                };
+                scene.add(mesh);
+                hearts.push(mesh);
+            }
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffb6c1, 0.8);
+            dirLight.position.set(10, 20, 10);
+            scene.add(dirLight);
+
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            hearts.forEach(h => {
+                h.rotation.x += h.userData.rotSpeedX;
+                h.rotation.y += h.userData.rotSpeedY;
+                h.position.y += h.userData.floatSpeed;
+                if (h.position.y > 35) h.position.y = -35;
+            });
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            if (!camera || !renderer) return;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        init3D();
+
+        // YouTube Player Integration
+        let player;
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('yt-player', {
+                height: '0',
+                width: '0',
+                videoId: 'U_eLHCa4I28',
+                playerVars: {
+                    'autoplay': 0,
+                    'controls': 0,
+                    'loop': 1,
+                    'playlist': 'U_eLHCa4I28'
+                }
+            });
+        }
+
+        let isPlaying = false;
+        document.getElementById('musicToggle').addEventListener('click', () => {
+            if (!player) return;
+            if (isPlaying) {
+                player.pauseVideo();
+                isPlaying = false;
+            } else {
+                player.playVideo();
+                isPlaying = true;
+            }
+        });
+
+        // Sequence
+        const captions = [
+            "Gracias por darme tanto, mamita hermosa...",
+            "Gracias por cada sonrisa y por tu amor incondicional...",
+            "Eres el pilar de nuestras vidas y nuestro ejemplo a seguir...",
+            "Gracias por enseñarme a ser fuerte y valiente...",
+            "Cada recuerdo a tu lado es un regalo del cielo...",
+            "Tu ternura llena de luz todos mis días...",
+            "Hoy celebramos tu vida, tu alegría y tu gran corazón...",
+            "Eres y siempre serás la mejor mamá del mundo..."
+        ];
+
+        function startExperience() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('introSeq').style.display = 'block';
+
+            if (player && player.playVideo) {
+                player.playVideo();
+                isPlaying = true;
+            }
+
+            let step = 0;
+            const totalSteps = 8;
+            const interval = setInterval(() => {
+                const currentImg = document.getElementById('f' + step);
+                currentImg.classList.remove('active');
+                
+                step++;
+                if (step < totalSteps) {
+                    const nextImg = document.getElementById('f' + step);
+                    nextImg.classList.add('active');
+                    const cap = document.getElementById('captionText');
+                    cap.style.opacity = 0;
+                    setTimeout(() => {
+                        cap.innerText = captions[step];
+                        cap.style.opacity = 1;
+                    }, 400);
+                } else {
+                    clearInterval(interval);
+                    setTimeout(showGallery, 1500);
+                }
+            }, 3200);
+        }
+
+        // 3D Carousel Stack logic
+        let currentIndex = 0;
+        let cards = [];
+
+        function showGallery() {
+            document.getElementById('introSeq').style.display = 'none';
+            document.getElementById('gallerySeq').style.display = 'block';
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+
+            cards = Array.from(document.querySelectorAll('.card'));
+            updateStack();
+            initSwipe();
+        }
+
+        function updateStack() {
+            cards.forEach((card, i) => {
+                const diff = (i - currentIndex + cards.length) % cards.length;
+                if (diff === 0) {
+                    card.style.transform = 'translateZ(0px) translateY(0px) scale(1)';
+                    card.style.opacity = '1';
+                    card.style.zIndex = '10';
+                    card.style.pointerEvents = 'auto';
+                } else if (diff === 1) {
+                    card.style.transform = 'translateZ(-60px) translateY(15px) scale(0.92)';
+                    card.style.opacity = '0.8';
+                    card.style.zIndex = '8';
+                    card.style.pointerEvents = 'none';
+                } else if (diff === 2) {
+                    card.style.transform = 'translateZ(-120px) translateY(30px) scale(0.84)';
+                    card.style.opacity = '0.5';
+                    card.style.zIndex = '6';
+                    card.style.pointerEvents = 'none';
+                } else {
+                    card.style.transform = 'translateZ(-180px) translateY(45px) scale(0.75)';
+                    card.style.opacity = '0';
+                    card.style.zIndex = '1';
+                    card.style.pointerEvents = 'none';
+                }
+            });
+        }
+
+        function initSwipe() {
+            const container = document.getElementById('carousel');
+            let startX = 0, currentX = 0, isDragging = false;
+
+            container.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+                isDragging = true;
+            });
+
+            container.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                currentX = e.touches[0].clientX;
+            });
+
+            container.addEventListener('touchend', () => {
+                if (!isDragging) return;
+                isDragging = false;
+                const diffX = currentX - startX;
+                if (Math.abs(diffX) > 40) {
+                    currentIndex = (currentIndex + 1) % cards.length;
+                    updateStack();
+                }
+            });
+
+            // Mouse support
+            container.addEventListener('mousedown', (e) => {
+                startX = e.clientX;
+                isDragging = true;
+            });
+
+            container.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                currentX = e.clientX;
+            });
+
+            container.addEventListener('mouseup', () => {
+                if (!isDragging) return;
+                isDragging = false;
+                const diffX = currentX - startX;
+                if (Math.abs(diffX) > 40) {
+                    currentIndex = (currentIndex + 1) % cards.length;
+                    updateStack();
+                }
+            });
+        }
+    </script>
+</body>
+</html>
